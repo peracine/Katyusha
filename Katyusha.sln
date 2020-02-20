@@ -1,0 +1,36 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29728.190
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Katyusha", "src\Katyusha\Katyusha.csproj", "{E02630B6-C2A7-453B-9AEF-5F6DB0BDA0B2}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "test", "test", "{4F467BFC-F1EF-42EC-B7E8-29F9286021AF}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Katyusha.Test", "test\Katyusha.Test\Katyusha.Test.csproj", "{C6D349FC-9BA8-4E34-8EAF-27E9763739AE}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E02630B6-C2A7-453B-9AEF-5F6DB0BDA0B2}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E02630B6-C2A7-453B-9AEF-5F6DB0BDA0B2}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E02630B6-C2A7-453B-9AEF-5F6DB0BDA0B2}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E02630B6-C2A7-453B-9AEF-5F6DB0BDA0B2}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C6D349FC-9BA8-4E34-8EAF-27E9763739AE}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C6D349FC-9BA8-4E34-8EAF-27E9763739AE}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C6D349FC-9BA8-4E34-8EAF-27E9763739AE}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C6D349FC-9BA8-4E34-8EAF-27E9763739AE}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{C6D349FC-9BA8-4E34-8EAF-27E9763739AE} = {4F467BFC-F1EF-42EC-B7E8-29F9286021AF}
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {FBCFBB3B-74BD-45DB-BA1E-EA37561DF73B}
+	EndGlobalSection
+EndGlobal
