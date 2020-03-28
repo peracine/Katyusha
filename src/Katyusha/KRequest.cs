@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Net.Http;
+using System.Net.Mime;
+using System.Text;
+using System.Text.Json;
 
 namespace Katyusha
 {
@@ -27,33 +29,44 @@ namespace Katyusha
         {
             Method = method ?? throw new ArgumentNullException($"The method parameter cannot be null.");
             Endpoint = endpoint.IsWellFormedOriginalString() ? endpoint : throw new ArgumentException($"The endpoint parameter ({endpoint.ToString()}) is invalid.");
-            Headers = headers;
+            Headers = headers ?? new Dictionary<string, string>();
         }
 
         /// <summary>
-        /// Set the request body.
+        /// Sets the request body. Generic method.
         /// </summary>
         /// <param name="content"></param>
-        public void SetContent(StringContent content)
+        public void SetContent(HttpContent content)
         {
             Content = content;
         }
 
         /// <summary>
-        /// Set the request body for a multipart/form-data request (file uploading f.ex.).
+        /// Sets the request body. Sends the content as a json object.
+        /// </summary>
+        /// <param name="content"></param>
+        /// <returns></returns>
+        public void SetContent(object content)
+        {
+            Content = new StringContent(JsonSerializer.Serialize(content), Encoding.UTF8, MediaTypeNames.Application.Json);
+        }
+
+        /// <summary>
+        /// Sets the request body. Sends the content as a multipart form (uploading files).
         /// </summary>
         /// <param name="files"></param>
-        public void SetMultipartContent(IEnumerable<Stream> files)
+        /// <returns></returns>
+        public void SetContent(IEnumerable<byte[]> files)
         {
             if (files == null || !files.Any())
-                throw new ArgumentNullException($"The files parameter cannot be null or empty.");
- 
-            var multipartForm = new MultipartFormDataContent("KTEST");
+                return;
+
+            var multipartForm = new MultipartFormDataContent("----------");
             multipartForm.Headers.ContentType.MediaType = "multipart/form-data";
             int index = 0;
-            foreach (var file in files)
+            foreach (var file in files.Where(f => f != null))
             {
-                multipartForm.Add(new StreamContent(file), $"file_{index}", $"File{index}");
+                multipartForm.Add(new ByteArrayContent(file), "files", $"File{index}");
                 index++;
             }
 

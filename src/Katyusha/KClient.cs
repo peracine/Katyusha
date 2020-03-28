@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Threading.Tasks;
 
@@ -10,41 +10,54 @@ namespace Katyusha
     public class KClient
     {
         /// <summary>
-        /// Timeout expressed in seconds
+        /// Timeout expressed in seconds.
         /// </summary>
         public uint Timeout { get; set; } = 30;
+        /// <summary>
+        /// Stores the response body in the result. Only the response header is kept by default. Setting to true this value can degrade performance.
+        /// </summary>
+        public bool StoreResponseBody { get; set; } = false;
+        /// <summary>
+        /// Total requests send in 1 second.
+        /// </summary>
         public uint RequestsPerSecond { get; }
         /// <summary>
-        /// Amount of requests send at the same time
+        /// Amount of requests send at the same time.
         /// </summary>
         public uint BatchSize { get; }
         /// <summary>
-        /// Test duration expressed in seconds. Keep this value low!
+        /// Total repetitions to perform. This is equivalent to a duration in seconds. Keep this value under the timeout of the test framework.
         /// </summary>
-        public uint Duration { get; }
+        public uint Repetition { get; }
         private static HttpClient _client;
 
         /// <summary>
-        /// Create a http client and prepare all requests. The requests will be send one by one if batchSize = 1.
+        /// Creates a http client and prepares all requests.
         /// </summary>
-        /// <param name="requestsPerSecond"></param>
-        /// <param name="batchSize"></param>
-        public KClient(uint requestsPerSecond = 1, uint batchSize = 1, uint duration = 1)
+        /// <param name="requestsPerSecond">Optional. RPS.</param>
+        /// <param name="batchSize">Optional. Cannot be greater than requestsPerSecond.</param>
+        /// <param name="repetition">Optional. Total repetitions to perform.</param>
+        public KClient(uint requestsPerSecond = 1, uint batchSize = 1, uint repetition = 1)
         {
             RequestsPerSecond = requestsPerSecond;
             BatchSize = batchSize >= requestsPerSecond ? requestsPerSecond : batchSize;
-            Duration = duration;
-            _client = new HttpClient();
-            _client.Timeout = TimeSpan.FromSeconds(Timeout);
+            Repetition = repetition;
+            var handler = new HttpClientHandler()
+            {
+                AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
+            };
+            _client = new HttpClient(handler)
+            {
+                Timeout = TimeSpan.FromSeconds(Timeout)
+            };
         }
 
         /// <summary>
-        /// Send all requests. correlationId is used for reporting purpose.
+        /// Sends the request.
         /// </summary>
-        /// <param name="request"></param>
-        /// <param name="correlationId"></param>
+        /// <param name="request">Valid KRequest object.</param>
         /// <returns></returns>
-        public async Task<KResponse[]> SendAsync(KRequest request, string correlationId = null)
+        public async Task<KResponse[]> SendAsync(KRequest request)
         {
             var requests = new List<Task<KResponse>>();
             int numberOfBatchesPerSecond = (int)Math.Ceiling(Convert.ToDouble(RequestsPerSecond) / Convert.ToDouble(BatchSize));
@@ -55,12 +68,12 @@ namespace Katyusha
             int requestId = 0;
             int delay = 0;
 
-            while (requestId < RequestsPerSecond * Duration)
+            while (requestId < RequestsPerSecond * Repetition)
             {
                 requests.Add(SendWithDelayAsync(
                     delay: delay,
-                    request: request,
-                    correlationId: correlationId));
+                    request: MapToHttpRequestMessage(request),
+                    storeResponseBody: StoreResponseBody));
 
                 totalRequestsInTheCurrentBatch++;
                 totalRequestsInTheCurrentInterval++;
@@ -84,35 +97,40 @@ namespace Katyusha
             return await Task.WhenAll(requests).ConfigureAwait(false);
         }
 
-        private async Task<KResponse> SendWithDelayAsync(int delay, KRequest request, string correlationId = null)
+        private async Task<KResponse> SendWithDelayAsync(int delay, HttpRequestMessage request, bool storeResponseBody)
         {
             await Task.Delay(delay).ConfigureAwait(false);
             var timestamp = DateTime.UtcNow;
             try
             {
-                var httpRequestMessage = new HttpRequestMessage(request.Method, request.Endpoint);
-                httpRequestMessage.Content = request.Content;
-                if (request.Headers != null && request.Headers.Any())
-                {
-                    foreach (var header in request.Headers)
-                    {
-                        httpRequestMessage.Headers.Add(header.Key, header.Value);
-                    }
-                }
-
+                var completionOption = storeResponseBody ? HttpCompletionOption.ResponseContentRead : HttpCompletionOption.ResponseHeadersRead;
                 var stopWatch = Stopwatch.StartNew();
-                var response = await _client.SendAsync(httpRequestMessage).ConfigureAwait(false);
-                return new KResponse(timestamp, stopWatch.ElapsedMilliseconds, response, correlationId);
-
+                var response = await _client.SendAsync(request, completionOption).ConfigureAwait(false);
+                return new KResponse(timestamp, stopWatch.ElapsedMilliseconds, response, storeResponseBody);
             }
             catch (OperationCanceledException) //Timeout exception
             {
-                return new KResponse(timestamp, Timeout * 1000, null, correlationId);
+                return new KResponse(timestamp, Timeout * 1000, null, false);
             }
-            catch (Exception) //Other exception
+            catch //Other exception
             {
-                return new KResponse(timestamp, 0, null, correlationId);
+                 return new KResponse(timestamp, 0, null, false);
             }
+        }
+
+        private static HttpRequestMessage MapToHttpRequestMessage(KRequest kRequest)
+        {
+            var httpRequestMessage = new HttpRequestMessage(kRequest.Method, kRequest.Endpoint)
+            {
+                Content = kRequest.Content
+            };
+
+            foreach (var header in kRequest.Headers)
+            {
+                httpRequestMessage.Headers.Add(header.Key, header.Value);
+            }
+
+            return httpRequestMessage;
         }
     }
 }
