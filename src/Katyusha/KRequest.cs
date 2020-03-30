@@ -28,7 +28,7 @@ namespace Katyusha
         public KRequest(HttpMethod method, Uri endpoint, Dictionary<string, string> headers = null)
         {
             Method = method ?? throw new ArgumentNullException($"The method parameter cannot be null.");
-            Endpoint = endpoint.IsWellFormedOriginalString() ? endpoint : throw new ArgumentException($"The endpoint parameter ({endpoint.ToString()}) is invalid.");
+            Endpoint = endpoint.IsWellFormedOriginalString() ? endpoint : throw new ArgumentException($"The endpoint parameter ({endpoint}) is invalid.");
             Headers = headers ?? new Dictionary<string, string>();
         }
 

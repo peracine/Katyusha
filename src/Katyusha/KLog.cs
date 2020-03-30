@@ -1,4 +1,4 @@
-﻿using System;       
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -61,15 +61,30 @@ namespace Katyusha
 
         private static async Task<string> GetSerializedResponse(KResponse kResponse)
         {
-            string content = string.Empty;
-            if (kResponse.Response != null && kResponse.Response.Content != null)
+            string content;
+            if (kResponse.Exception == null && kResponse.Response != null && kResponse.Response.Content != null)
             {
                 content = await kResponse.Response.Content.ReadAsStringAsync();
                 content = "," + Regex.Replace(content, @"\t|\n|\r", string.Empty);
             }
+            else if (kResponse.Exception != null)
+            {
+                if (kResponse.Exception.GetType() == typeof(OperationCanceledException))
+                {
+                    content = ",Exception:Timeout";
+                }
+                else
+                {
+                    content = $",Exception:{kResponse.Exception.GetType()}:{kResponse.Exception.Message}:{kResponse.Exception.Source}";
+                }
+            }
+            else
+            {
+                content = string.Empty;
+            }
 
-            string log = kResponse.Response == null ? "NULL" : $"{kResponse.Response.StatusCode.ToString()},{kResponse.Response.RequestMessage.Method.Method},{kResponse.Response.RequestMessage.RequestUri}{content}";
-            return $"{kResponse.Timestamp.ToString("yyyy-MM-dd HH:mm:ss.ffff")},{kResponse.ElapsedTime},{log}";
+            string log = kResponse.Response == null ? "NULL" : $"{kResponse.Response.StatusCode},{kResponse.Response.RequestMessage.Method.Method},{kResponse.Response.RequestMessage.RequestUri}{content}";
+            return $"{kResponse.Timestamp:yyyy-MM-dd HH:mm:ss.ffff},{kResponse.ElapsedTime},{log}";
         }
 
         /// <summary>
@@ -83,10 +98,10 @@ namespace Katyusha
                 return;
 
             using var streamWriter = new StreamWriter(GetLogFile(FileType.Error), true);
-            await streamWriter.WriteLineAsync($"{DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss")}: {exception.Message}");
+            await streamWriter.WriteLineAsync($"{DateTime.UtcNow:yyyy-MM-dd HH:mm:ss}: {exception.Message}");
         }
 
         private static string GetLogFile(FileType fileType) =>
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), $"K{fileType.ToString()}_{DateTime.Today.ToString("yyyy-MM-dd")}.log");
+            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Personal), $"K{fileType}_{DateTime.Today:yyyy-MM-dd}.log");
     }
 }

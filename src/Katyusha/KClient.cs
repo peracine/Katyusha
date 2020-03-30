@@ -14,9 +14,9 @@ namespace Katyusha
         /// </summary>
         public uint Timeout { get; set; } = 30;
         /// <summary>
-        /// Stores the response body in the result. Only the response header is kept by default. Setting to true this value can degrade performance.
+        /// Stores the response body in the result.
         /// </summary>
-        public bool StoreResponseBody { get; set; } = false;
+        public bool IncludeResponseBodyInResult { get; set; } = true;
         /// <summary>
         /// Total requests send in 1 second.
         /// </summary>
@@ -26,7 +26,7 @@ namespace Katyusha
         /// </summary>
         public uint BatchSize { get; }
         /// <summary>
-        /// Total repetitions to perform. This is equivalent to a duration in seconds. Keep this value under the timeout of the test framework.
+        /// Total repetitions to perform. This is equivalent to a duration in seconds.
         /// </summary>
         public uint Repetition { get; }
         private static HttpClient _client;
@@ -46,6 +46,7 @@ namespace Katyusha
             {
                 AutomaticDecompression = DecompressionMethods.GZip | DecompressionMethods.Deflate
             };
+
             _client = new HttpClient(handler)
             {
                 Timeout = TimeSpan.FromSeconds(Timeout)
@@ -73,7 +74,7 @@ namespace Katyusha
                 requests.Add(SendWithDelayAsync(
                     delay: delay,
                     request: MapToHttpRequestMessage(request),
-                    storeResponseBody: StoreResponseBody));
+                    includeResponseBodyInResult: IncludeResponseBodyInResult));
 
                 totalRequestsInTheCurrentBatch++;
                 totalRequestsInTheCurrentInterval++;
@@ -97,24 +98,21 @@ namespace Katyusha
             return await Task.WhenAll(requests).ConfigureAwait(false);
         }
 
-        private async Task<KResponse> SendWithDelayAsync(int delay, HttpRequestMessage request, bool storeResponseBody)
+        private async Task<KResponse> SendWithDelayAsync(int delay, HttpRequestMessage request, bool includeResponseBodyInResult)
         {
             await Task.Delay(delay).ConfigureAwait(false);
             var timestamp = DateTime.UtcNow;
             try
             {
-                var completionOption = storeResponseBody ? HttpCompletionOption.ResponseContentRead : HttpCompletionOption.ResponseHeadersRead;
+                var completionOption = includeResponseBodyInResult ? HttpCompletionOption.ResponseContentRead : HttpCompletionOption.ResponseHeadersRead;
                 var stopWatch = Stopwatch.StartNew();
                 var response = await _client.SendAsync(request, completionOption).ConfigureAwait(false);
-                return new KResponse(timestamp, stopWatch.ElapsedMilliseconds, response, storeResponseBody);
+                return new KResponse(timestamp, stopWatch.ElapsedMilliseconds, response, includeResponseBodyInResult);
             }
-            catch (OperationCanceledException) //Timeout exception
+            catch (Exception exception)
             {
-                return new KResponse(timestamp, Timeout * 1000, null, false);
-            }
-            catch //Other exception
-            {
-                 return new KResponse(timestamp, 0, null, false);
+                long elapsedTime = exception.GetType() == typeof(OperationCanceledException) ? Timeout * 1000 : 0;
+                return new KResponse(timestamp, elapsedTime, null, false, exception);
             }
         }
 

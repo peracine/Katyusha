@@ -14,19 +14,21 @@ namespace Katyusha
         /// </summary>
         public long ElapsedTime { get; }
         public HttpResponseMessage Response { get; }
+        public Exception Exception { get; }
 
         private KResponse()
         {
         }
 
-        public KResponse(DateTime timestamp, long elapsedTime, HttpResponseMessage response, bool storeResponseBody)
+        public KResponse(DateTime timestamp, long elapsedTime, HttpResponseMessage response, bool includeResponseBodyInResult, Exception exception = null)
         {
-            if (response != null && !storeResponseBody)
+            if (response != null && !includeResponseBodyInResult)
                 response.Content = null;
 
             Timestamp = timestamp;
             ElapsedTime = elapsedTime;
             Response = response;
+            Exception = exception;
         }
     }
 }

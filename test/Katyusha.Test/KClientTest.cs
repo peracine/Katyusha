@@ -45,11 +45,8 @@ namespace Katyusha.Test
         public async Task Send_GetWithReportWithResponseBody_returns_true()
         {
             var request = new KRequest(HttpMethod.Get, new Uri(_endpoint));
-            var client = new KClient()
-            {
-                StoreResponseBody = true
-            };
-            string reportFile = Path.Combine(Directory.GetCurrentDirectory(), $"KReport_{DateTime.Today.ToString("yyyy-MM-dd")}__{Guid.NewGuid()}.csv");
+            var client = new KClient();
+            string reportFile = Path.Combine(Directory.GetCurrentDirectory(), $"KReport_{DateTime.Today:yyyy-MM-dd}__{Guid.NewGuid()}.csv");
             
             var results = await client.SendAsync(request);
             await KLog.ReportAsync(results, reportFile);
@@ -61,12 +58,16 @@ namespace Katyusha.Test
         public async Task Send_GetWithReportWithoutResponseBody_returns_true()
         {
             var request = new KRequest(HttpMethod.Get, new Uri(_endpoint));
-            var client = new KClient();
-            string reportFile = Path.Combine(Directory.GetCurrentDirectory(), $"KReport_{DateTime.Today.ToString("yyyy-MM-dd")}__{Guid.NewGuid()}.csv");
+            var client = new KClient()
+            { 
+                IncludeResponseBodyInResult = false
+            };
+            string reportFile = Path.Combine(Directory.GetCurrentDirectory(), $"KReport_{DateTime.Today:yyyy-MM-dd}__{Guid.NewGuid()}.csv");
             
             var results = await client.SendAsync(request);
             await KLog.ReportAsync(results, reportFile);
 
+            Assert.DoesNotContain(results, r => r.Response.Content != null);
             Assert.True(File.Exists(reportFile));
         }
 
