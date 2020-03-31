@@ -11,7 +11,7 @@ namespace Katyusha
     public class KRequest
     {
         public HttpMethod Method { get; }
-        public Uri Endpoint { get; }
+        public Uri Uri { get; }
         public Dictionary<string, string> Headers { get; }
         public HttpContent Content { get; private set; }
 
@@ -23,12 +23,12 @@ namespace Katyusha
         /// Standard request without body.
         /// </summary>
         /// <param name="method"></param>
-        /// <param name="endpoint"></param>
+        /// <param name="uri"></param>
         /// <param name="headers"></param>
-        public KRequest(HttpMethod method, Uri endpoint, Dictionary<string, string> headers = null)
+        public KRequest(HttpMethod method, Uri uri, Dictionary<string, string> headers = null)
         {
             Method = method ?? throw new ArgumentNullException($"The method parameter cannot be null.");
-            Endpoint = endpoint.IsWellFormedOriginalString() ? endpoint : throw new ArgumentException($"The endpoint parameter ({endpoint}) is invalid.");
+            Uri = uri.IsWellFormedOriginalString() ? uri : throw new ArgumentException($"The uri parameter ({uri}) is invalid.");
             Headers = headers ?? new Dictionary<string, string>();
         }
 

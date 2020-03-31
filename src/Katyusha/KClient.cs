@@ -60,6 +60,9 @@ namespace Katyusha
         /// <returns></returns>
         public async Task<KResponse[]> SendAsync(KRequest request)
         {
+            if (request == null)
+                return Array.Empty<KResponse>();
+
             var requests = new List<Task<KResponse>>();
             int numberOfBatchesPerSecond = (int)Math.Ceiling(Convert.ToDouble(RequestsPerSecond) / Convert.ToDouble(BatchSize));
             int interval = (int)Math.Floor(Convert.ToDouble(1000 / numberOfBatchesPerSecond));
@@ -118,7 +121,7 @@ namespace Katyusha
 
         private static HttpRequestMessage MapToHttpRequestMessage(KRequest kRequest)
         {
-            var httpRequestMessage = new HttpRequestMessage(kRequest.Method, kRequest.Endpoint)
+            var httpRequestMessage = new HttpRequestMessage(kRequest.Method, kRequest.Uri)
             {
                 Content = kRequest.Content
             };

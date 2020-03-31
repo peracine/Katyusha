@@ -4,6 +4,16 @@
     <TargetFramework>netcoreapp3.1</TargetFramework>
     <Copyright>MIT</Copyright>
     <RepositoryUrl>https://github.com/peracine/Katyusha</RepositoryUrl>
+    <PackageTags>unit-testing load stress test api</PackageTags>
+    <AssemblyVersion>1.1.0.0</AssemblyVersion>
+    <FileVersion>1.1.0.0</FileVersion>
+    <PackageReleaseNotes>-Renaming Endpoint to Uri (breaking change)
+-Add console log (debug mode)</PackageReleaseNotes>
+    <Version>1.1.0</Version>
+    <Authors>peracine</Authors>
+    <Company>https://github.com/peracine</Company>
+    <Description>Light and flexible utility to load/stress test the APIs. Provides detailed results per request and easy to include in unit tests. 
+100% .Net Core (&gt;= 3.1) and no dependencies.</Description>
   </PropertyGroup>
 
 </Project>

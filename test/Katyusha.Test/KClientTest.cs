@@ -11,19 +11,19 @@ namespace Katyusha.Test
 {
     public class KClientTest
     {
-        const string _endpoint = "https://reqres.in/api/users";
+        const string _uri = "https://reqres.in/api/users";
 
         [Fact]
         public async Task Send_Get_returns_200()
         {
-            var request = new KRequest(HttpMethod.Get, new Uri(_endpoint));
+            var request = new KRequest(HttpMethod.Get, new Uri(_uri));
             var client = new KClient(3, 2, 2); //First batch with 2 requests and a second 500ms later with 1 request, with two iterations (=> total 6 requests)
 
             var results = await client.SendAsync(request);
 
             Assert.True(results.Count() == client.RequestsPerSecond * client.Repetition);
-            Assert.Empty(results.Where(r => r.Response.StatusCode != HttpStatusCode.OK));
-            Assert.Empty(results.Where(r => r.ElapsedTime > 1000));
+            Assert.DoesNotContain(results, r => r.Response.StatusCode != HttpStatusCode.OK);
+            Assert.DoesNotContain(results, r => r.ElapsedTime > 1000);
         }
 
         [Fact]
@@ -33,7 +33,7 @@ namespace Katyusha.Test
             {
                 { "Authorization", "Bearer xyz" }
             };
-            var request = new KRequest(HttpMethod.Get, new Uri(_endpoint), headers);
+            var request = new KRequest(HttpMethod.Get, new Uri(_uri), headers);
             var client = new KClient();
 
             var results = await client.SendAsync(request);
@@ -44,7 +44,7 @@ namespace Katyusha.Test
         [Fact]
         public async Task Send_GetWithReportWithResponseBody_returns_true()
         {
-            var request = new KRequest(HttpMethod.Get, new Uri(_endpoint));
+            var request = new KRequest(HttpMethod.Get, new Uri(_uri));
             var client = new KClient();
             string reportFile = Path.Combine(Directory.GetCurrentDirectory(), $"KReport_{DateTime.Today:yyyy-MM-dd}__{Guid.NewGuid()}.csv");
             
@@ -57,7 +57,7 @@ namespace Katyusha.Test
         [Fact]
         public async Task Send_GetWithReportWithoutResponseBody_returns_true()
         {
-            var request = new KRequest(HttpMethod.Get, new Uri(_endpoint));
+            var request = new KRequest(HttpMethod.Get, new Uri(_uri));
             var client = new KClient()
             { 
                 IncludeResponseBodyInResult = false
@@ -74,7 +74,7 @@ namespace Katyusha.Test
         [Fact]
         public async Task Send_PostWithObject_returns_201()
         {
-            var request = new KRequest(HttpMethod.Post, new Uri(_endpoint));
+            var request = new KRequest(HttpMethod.Post, new Uri(_uri));
             request.SetContent(new { Id = 1, Name = "Test" });
             var client = new KClient();
 
@@ -86,7 +86,7 @@ namespace Katyusha.Test
         [Fact]
         public async Task Send_PostWithByteArrays_returns_201()
         {
-            var request = new KRequest(HttpMethod.Post, new Uri(_endpoint));
+            var request = new KRequest(HttpMethod.Post, new Uri(_uri));
             request.SetContent(new List<byte[]>() { GetTestTextFileAsByteArray(), GetTestTextFileAsByteArray() });
             var client = new KClient();
 
